@@ -22,7 +22,7 @@ If you want to get a basic Ozone server running in a virtual machine, well that'
 6. Edit the newly created Vagrantfile and enable the Puppet config and the port to forward:
 
 		config.vm.forward_port 443, 8443
-    config.vm.forward_port 80, 8080
+		config.vm.forward_port 80, 8080
     
 		config.vm.provision :puppet do |puppet|
     		puppet.manifests_path = "manifests"
