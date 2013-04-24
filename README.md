@@ -1,6 +1,6 @@
 # puppet-ozone #
 
-puppet-ozone is an extensive [Ozone](https://www.owfgoss.org) build and configuration management module for Puppet.  Currently this module only supports RHEL6/CentOS6.x systems.
+puppet-ozone is an [Ozone](https://www.owfgoss.org) build and configuration management module for Puppet.  Currently this module only supports RHEL6/CentOS6.x systems.
 
 The public release of this module is intended only as a template for installing and setting up initial Ozone environments.  Using Puppet and this module for production environments is at your own risk.
 
@@ -48,7 +48,6 @@ If you want to get a basic Ozone server running in a virtual machine, well that'
 
 NOTE: Depending on resources available it may take a while.  For example, I've allocated a bit more RAM to box (in the Vagrantfile ) with : `config.vm.customize ["modifyvm", :id, "--memory", 2048]` and it still takes over an hour to complete the full provisioning.  Hey, we're building from source code here, and lots of good stuff comes out at the end.
 
-Here's my complete [Vagrantfile](https://gist.github.com/4552038).
 
 When it's all said and done you should be able to see the running Ozone at [https://localhost:8443/owf](https://localhost:8443/owf) and login with testAdmin1:password.
 
