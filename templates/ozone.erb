@@ -1,0 +1,214 @@
+#!/bin/bash
+#
+# ozone      Starts and stops the dedicated OZONE Tomcat server.
+#
+# Created by Jason Moskowitz on 2010-09-07.
+# Copyright 2010 RadiantBlue Technologies Inc., All rights reserved.
+#
+### BEGIN INIT INFO
+# chkconfig: 3 80 20
+# Provides: OZONE
+# Required-Start: $network $syslog
+# Required-Stop: $network $syslog
+# Default-Start: 3
+# Default-Stop: 0 1 2 6
+# Should-Start: $network $syslog 
+# Should-Stop: $network $syslog
+# Description: OZONE start, stop and restart script
+# Short-Description: start, stop and restart OZONE
+### END INIT INFO
+
+#CONFIG_FILE="/etc/ozone.conf"
+#
+#if [ -f $CONFIG_FILE ]; then
+#	. $CONFIG_FILE
+#fi
+
+RETVAL=$?
+PROG="ozone"
+CATALINA_HOME=<%= @ozone_home %>/tomcat
+OZONE_LOG_DIR="/var/log/ozone"
+OZONE_ERROR_LOG=<%= @ozone_home %>/tomcat/logs/error_log
+OZONE_USER="root"
+OZONE_GROUP="ozone"
+
+# Must be exported in order for catatlina to generate pid file
+export CATALINA_PID="/var/run/ozone/ozone.pid"
+
+start() {
+	if [ -f "$CATALINA_HOME/bin/startup.sh" ]; then	
+	 	# Make ozone lock file dir and change ownership to ozone user
+		if [ ! -d /var/run/ozone ]; then
+				mkdir -p /var/run/ozone
+				chown $OZONE_USER:$OZONE_GROUP /var/run/ozone
+		fi
+		# Make ozone log directory and change ownership to ozone user
+		if [ ! -d "$OZONE_LOG_DIR" ]; then
+				mkdir -p $OZONE_LOG_DIR
+				chown $OZONE_USER:$OZONE_GROUP $OZONE_LOG_DIR
+		fi
+		# Check for running instance
+	 	if [ -e "$CATALINA_PID" ]; then
+	           read PID < $CATALINA_PID	
+	                if checkpid $PID 2>&1; then
+	                    echo $"$PROG process is already running..."
+	                        return 1
+	                        echo_failure
+	                    else
+	                        echo "Lock file found but no $PROG process running for (pid $PID)"
+	                        echo "Removing old lock file..."
+							rm -rf $CATALINA_PID
+	                fi
+	     fi
+			echo -ne $"Starting $PROG: "
+            /bin/su - $OZONE_USER $CATALINA_HOME/bin/startup.sh >> $OZONE_ERROR_LOG 2>&1
+          	RETVAL="$?"
+		    if [ "$RETVAL" -eq 0 ]; then 
+		        	echo_success
+		            echo -en "\n"
+		    	else
+		            echo_failure
+		            echo -en "\n"
+					exit 1
+		    fi
+	else
+		echo $"CATALINA_HOME does not exist..."
+		echo_failure
+		echo -en "\n"
+		exit 1
+	fi
+}
+
+stop() {
+    COUNT="0"
+    WAIT="10"
+    if [ -e "$CATALINA_PID" ]; then
+		read PID < $CATALINA_PID
+        if checkpid $PID 2>&1; then
+            echo -ne $"Stopping $PROG: "
+			/bin/su - $OZONE_USER $CATALINA_HOME/bin/shutdown.sh >> $OZONE_ERROR_LOG 2>&1
+			RETVAL="$?"
+			if [ "$RETVAL" -eq 0 ]; then
+				echo_success
+				echo -en "\n"
+			else
+				until [ "$(ps -p $PID | grep -c $PID)" -eq "0" ]; do
+				echo -ne "\nWaiting on $PROG process to exit..."
+				let COUNT="${COUNT}+1"
+				done
+					if [ "$COUNT" -gt "$WAIT" ]; then
+						echo -ne "\nKilling $PROG process which did not shutdown properly after $WAIT seconds"
+						kill -9 $PID
+					fi
+					echo_success
+					echo -en "\n"
+			fi
+		fi
+	else
+		echo -ne $"Stopping $PROG: "
+		echo_failure
+		echo -en "\n"
+	fi
+}
+
+status() {
+  RETVAL="1"
+    if [ -e "$CATALINA_PID" ]; then
+        read PID < $CATALINA_PID
+        if checkpid $PID 2>&1; then
+            echo "$PROG (pid $PID) is running..."
+            RETVAL="0"
+        else
+            echo "Lock file found but no process running for (pid $PID)"
+        fi
+    else
+        PID="$(pgrep -u $OZONE_USER java)"
+        if [ -n "$PID" ]; then
+            echo "$PROG running (pid $PID) but no PID file exists"
+            RETVAL="0"
+        else
+            echo "$PROG is stopped"
+            RETVAL="1"
+        fi
+    fi
+    return $RETVAL
+}
+
+# Check if pid is running
+checkpid() {
+	local PID
+	for PID in $* ; do
+		[ -d "/proc/$PID" ] && return 0
+	done
+	return 1
+}	
+
+echo_success() {
+	if [ -e "/etc/redhat-release" ]; then
+		echo -en "\\033[60G"
+		echo -n "[  "
+		echo -en "\\033[0;32m"
+		echo -n $"OK"
+		echo -en "\\033[0;39m"
+		echo -n "  ]"
+		echo -en "\r"
+	elif [ -e "/etc/SuSE-release" ]; then
+		echo -en "\\033[60G"
+		echo -en "\\033[1;32m"
+		echo -n $"done"
+		echo -en "\\033[0;39m"
+		echo -en "\r"
+	else
+		echo -en "\\033[60G"
+		echo "OK"
+		echo -en "\r"
+	fi
+	return 0
+}
+
+echo_failure() {
+	if [ -e "/etc/redhat-release" ]; then
+		echo -en "\\033[60G"
+		echo -n "["
+		echo -en "\\033[0;31m"
+		echo -n $"FAILED"
+		echo -en "\\033[0;39m"
+		echo -n "]"
+		echo -en "\r"
+	elif [ -e "/etc/SuSE-release" ]; then
+		echo -en "\\033[60G"
+		echo -en "\\033[0;31m"
+		echo -n $"failed"
+		echo -en "\\033[0;39m"
+		echo -en "\r"
+	else
+		echo -en "\\033[60G"
+		echo "FAILED"
+		echo -en "\r"
+	fi
+    return 1
+}
+
+# See how we were called.
+case "$1" in
+ start)
+	start
+	;;
+ stop)
+	stop
+ 	;;
+restart)
+	stop
+    sleep 2
+    start
+    ;;
+status)
+	status
+	;;	
+ *)
+ 	echo $"Usage: $PROG {start|stop|restart|status}"
+	exit 1
+	;;
+esac
+
+exit $RETVAL
