@@ -53,9 +53,6 @@ When it's all said and done you should be able to see the running Ozone at [http
 
 # Todo
 
-* Setup Kakadu
-* Refactor the init.pp, moving stuff to their own classes
-
 # Problems?
 
 Let me know at <kwplummer@radiantblue.com>
