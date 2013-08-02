@@ -42,17 +42,17 @@ class ozone::ozone ( $user = "ozone", $ozone_home = "/opt/ozone", $ozone_https_p
     # Need Ant from source here
     exec { "get_ant": 
         cwd => '/usr/local',
-        command => 'wget http://download.nextag.com/apache//ant/binaries/apache-ant-1.9.0-bin.zip',
-        creates => '/usr/local/apache-ant-1.9.0-bin.zip',
+        command => 'wget http://download.nextag.com/apache//ant/binaries/apache-ant-1.9.2-bin.zip',
+        creates => '/usr/local/apache-ant-1.9.2-bin.zip',
     } ->
     exec { "unzip_ant":
         cwd => '/usr/local',
-        command => 'unzip apache-ant-1.9.0-bin.zip',
-        creates => '/usr/local/apache-ant-1.9.0'
+        command => 'unzip apache-ant-1.9.2-bin.zip',
+        creates => '/usr/local/apache-ant-1.9.2'
     } -> 
     file { "/usr/local/bin/ant":
         ensure => link,
-        target => '/usr/local/apache-ant-1.9.0/bin/ant'
+        target => '/usr/local/apache-ant-1.9.2/bin/ant'
     } ->
     exec { "get_ozone":
         cwd => $ozone_home,
