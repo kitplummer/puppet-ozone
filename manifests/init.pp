@@ -92,6 +92,12 @@ class ozone::ozone ( $user = "ozone",
         mode => 755,
         content => template("ozone/OzoneConfig.properties.erb"),
     } ->
+    file { "$ozone_home/tomcat/bin/setenv.sh":
+        owner => $user,
+        group => $user,
+        mode => 755,
+        content => template("ozone/setenv.sh.erb"),
+    } ->
     file { "$ozone_home/etc/tools/create_certs.sh":
 	owner => $user,
 	group => $group,
